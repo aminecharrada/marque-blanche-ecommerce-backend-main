@@ -2,14 +2,14 @@ const Product = require("../models/productModel");
 const ErrorHandler = require("../utils/ErrorHandler");
 const catchAsyncError = require("../middleware/CatchAsyncErrors");
 const cloudinary = require("../config/cloudinary");
-// const connet = require("../config/DataBase");
+const connectDBMobile = require("../config/DataBase");
 
 // create a new product
 exports.createProduct = catchAsyncError(async (req, res, next) => {
   // const conn = await connet();
 console.log(req.body);
   req.body.admin = req.user.id;
-  // const { name, description, stock, price, uidCategory } = req.body;
+  const { name, description, stock, price, uidCategory } = req.body;
   let images = req.body.images;
   let newImages = [];
   for (let i = 0; i < images.length; i++) {
@@ -29,8 +29,8 @@ console.log(req.body);
   //   }
   // );
 
-  // if (categories.length != 0) {
-  //   console.log(categories[0][0].category);
+  if (categories.length != 0) {
+    console.log(categories[0][0].category);
 
   //   console.log(name);
   //   console.log(description);
@@ -38,23 +38,23 @@ console.log(req.body);
   //   console.log(price);
   //   console.log(images[0]);
 
-  //   await conn.query(
-  //     "INSERT INTO Products (nameProduct, description, codeProduct, stock, price, picture, category_id) VALUE (?,?,?,?,?,?,?)",
-  //     [
-  //       name,
-  //       description,
-  //       "000" + name,
-  //       stock,
-  //       price,
-  //       newImages[0].url,
-  //       categories[0][0].uidCategory,
-  //     ],
-  //     (error, results) => {
-  //       if (error) throw error;
-  //       console.log(error);
-  //     }
-  //   );
-  
+    // await conn.query(
+    //   "INSERT INTO products (nameProduct, description, codeProduct, stock, price, picture, category_id) VALUE (?,?,?,?,?,?,?)",
+    //   [
+    //     name,
+    //     description,
+    //     "000" + name,
+    //     stock,
+    //     price,
+    //     newImages[0].url,
+    //     categories[0][0].uidCategory,
+    //   ],
+    //   (error, results) => {
+    //     if (error) throw error;
+    //     // console.log(error);
+    //   }
+    // );
+    // }
   // await connectDBMobile.query(
   //   "INSERT INTO Products (nameProduct, description, codeProduct, stock, price, picture, category_id) VALUE (?,?,?,?,?,?,?)",
   //   [
@@ -67,30 +67,33 @@ console.log(req.body);
   //     uidCategory,
   //   ]
   // );
-  const product = await Product.create(req.body);
+  
+// });
+const createProductTOMobile = async (body) => {
+  try {
+    const { name, description, stock, price, uidCategory } = req.body;
+
+    await connectDBMobile.query(
+      "INSERT INTO products (nameProduct, description, codeProduct, stock, price, picture, category_id) VALUE (?,?,?,?,?,?,?)",
+      [
+        name,
+        description,
+        "000" + name,
+        stock,
+        price,
+        req.file.filename,
+        uidCategory,
+      ]
+    );
+  } catch (err) {}
+};
+const product = await Product.create(req.body);
   res.status(200).json({
     success: true,
     data: product,
   });
+  }
 });
-// const createProductTOMobile = async (body) => {
-//   try {
-//     const { name, description, stock, price, uidCategory } = req.body;
-
-//     await connectDBMobile.query(
-//       "INSERT INTO Products (nameProduct, description, codeProduct, stock, price, picture, category_id) VALUE (?,?,?,?,?,?,?)",
-//       [
-//         name,
-//         description,
-//         "000" + name,
-//         stock,
-//         price,
-//         req.file.filename,
-//         uidCategory,
-//       ]
-//     );
-//   } catch (err) {}
-// };
 // update an existing product
 exports.updateProduct = catchAsyncError(async (req, res, next) => {
   if (!req.params.id) {
