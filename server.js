@@ -22,6 +22,7 @@ const errorMiddleware = require("./middleware/Error");
 // require db configs
 const connectToDb = require("./config/db");
 
+const connet = require("./config/DataBase");
 // require cloudinary configs
 const cloudinary = require("./config/cloudinary");
 
@@ -34,7 +35,7 @@ process.on("uncaughtException", (err) => {
 
 // connect to db
 connectToDb();
-
+// connet();
 // using middlewares
 app.use(
   cors({

@@ -2,12 +2,14 @@ const Product = require("../models/productModel");
 const ErrorHandler = require("../utils/ErrorHandler");
 const catchAsyncError = require("../middleware/CatchAsyncErrors");
 const cloudinary = require("../config/cloudinary");
-const connectDBMobile = require("../config/DataBase");
-
+const connect = require("../config/DataBase");
+var pool;
+var connection;
+var categorys;
+ConnectToDb();
 // create a new product
 exports.createProduct = catchAsyncError(async (req, res, next) => {
-  // const conn = await connet();
-console.log(req.body);
+// console.log(req.body);
   req.body.admin = req.user.id;
   const { name, description, stock, price, uidCategory } = req.body;
   let images = req.body.images;
@@ -19,42 +21,51 @@ console.log(req.body);
     newImages.push({ public_id, url });
   }
   req.body.images = [...newImages];
-  // console.log(newImages);
+  categorys = await getData(req);
+// Now you can use await with the wrapped function
+// try {
+//   ConnectPool.query("SELECT * FROM category", (error, results) => {
+//     if (error) {
+//       reject(error);
+//     } else {
+//       resolve(results);
+//     }
+//   });  
+// } catch (error) {
+//   console.error(error);
+// }
+  /////////////////////
+  // console.log(req.body.category);
   // const categories = await conn.query(
-  //   "SELECT * FROM Category WHERE category = ?",
+  //   "SELECT * FROM category WHERE category = ?",
   //   [req.body.category],
   //   (error, results) => {
   //     if (error) throw error;
-  //     console.log(error);
+  //     console.log(results);
   //   }
   // );
 
-  if (categories.length != 0) {
-    console.log(categories[0][0].category);
-
-  //   console.log(name);
-  //   console.log(description);
-  //   console.log(stock);
-  //   console.log(price);
-  //   console.log(images[0]);
-
-    // await conn.query(
-    //   "INSERT INTO products (nameProduct, description, codeProduct, stock, price, picture, category_id) VALUE (?,?,?,?,?,?,?)",
-    //   [
-    //     name,
-    //     description,
-    //     "000" + name,
-    //     stock,
-    //     price,
-    //     newImages[0].url,
-    //     categories[0][0].uidCategory,
-    //   ],
-    //   (error, results) => {
-    //     if (error) throw error;
-    //     // console.log(error);
-    //   }
-    // );
-    // }
+  if (categorys[0].length != 0) {
+   
+    
+    await connection.query(
+      "INSERT INTO products (nameProduct, description, codeProduct, stock, price, picture, category_id) VALUE (?,?,?,?,?,?,?)",
+      [
+        name,
+        description,
+        "000" + name,
+        stock,
+        price,
+        newImages[0].url, 
+        categorys[0][0].uidCategory,
+      ],
+      (error, results) => {
+        if (error) throw error;
+         console.log(error);
+      }
+    );
+  }
+  
   // await connectDBMobile.query(
   //   "INSERT INTO Products (nameProduct, description, codeProduct, stock, price, picture, category_id) VALUE (?,?,?,?,?,?,?)",
   //   [
@@ -67,33 +78,70 @@ console.log(req.body);
   //     uidCategory,
   //   ]
   // );
-  
-// });
-const createProductTOMobile = async (body) => {
-  try {
-    const { name, description, stock, price, uidCategory } = req.body;
 
-    await connectDBMobile.query(
-      "INSERT INTO products (nameProduct, description, codeProduct, stock, price, picture, category_id) VALUE (?,?,?,?,?,?,?)",
-      [
-        name,
-        description,
-        "000" + name,
-        stock,
-        price,
-        req.file.filename,
-        uidCategory,
-      ]
-    );
-  } catch (err) {}
-};
-const product = await Product.create(req.body);
+  const product = await Product.create(req.body);
   res.status(200).json({
     success: true,
     data: product,
   });
-  }
+
 });
+
+async function ConnectToDb() {
+  try {
+     pool = await connect();
+     connection = await pool.getConnection();
+    
+  } catch (error) {
+    console.error("Error connecting to the database:", error);
+  }
+}
+const getData = async (req) => {
+  try {
+   const categorys = await connection.query(
+      "SELECT * FROM category WHERE category = ?",
+      [req.body.category],
+      (error, results) => {
+        if (error) throw error;
+        console.log(results);
+      })
+  //  connection.release(); // Release the connection back to the pool
+  //  pool.end(); // Close the connection pool when done
+   return categorys;
+ } catch (error) {
+   console.error("Error connecting to the database:", error);
+ }
+};
+
+// const InsertDataToDbMobil = async () => {
+//   try {
+//    const categorys = await connection.query("SELECT * FROM category");
+//   //  connection.release(); // Release the connection back to the pool
+//   //  pool.end(); // Close the connection pool when done
+//    return categorys;
+//  } catch (error) {
+//    console.error("Error connecting to the database:", error);
+//  }
+// };
+
+// const createProductTOMobile = async (body) => {
+//   try {
+//     const { name, description, stock, price, uidCategory } = req.body;
+
+//     await connectDBMobile.query(
+//       "INSERT INTO Products (nameProduct, description, codeProduct, stock, price, picture, category_id) VALUE (?,?,?,?,?,?,?)",
+//       [
+//         name,
+//         description,
+//         "000" + name,
+//         stock,
+//         price,
+//         req.file.filename,
+//         uidCategory,
+//       ]
+//     );
+//   } catch (err) {}
+// };
 // update an existing product
 exports.updateProduct = catchAsyncError(async (req, res, next) => {
   if (!req.params.id) {
@@ -148,7 +196,17 @@ exports.deleteProduct = catchAsyncError(async (req, res, next) => {
 
 // send all product details
 exports.getAllProducts = catchAsyncError(async (req, res) => {
-  const products = await Product.find();
+  console.log(req.headers.isadmin);
+  var products ;
+ if(req.headers.isadmin != 'true'){
+  if (req.headers.access_id != null){
+    products= await Product.find({ admin: req.headers.access_id  })
+
+  }
+ }else if (req.headers.isadmin == 'true'){
+  products = await Product.find();
+ }
+
   const data = products.map((item, index) => {
     const {
       _id: id,
