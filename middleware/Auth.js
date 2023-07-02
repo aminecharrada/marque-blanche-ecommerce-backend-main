@@ -29,7 +29,10 @@ exports.checkUserAuthentication = catchAsyncErrors(async (req, res, next) => {
 
 exports.checkAdminPrivileges = (...roles) => {
   return (req, res, next) => {
-    if (!roles.includes(req.user.privilege)) {
+    // console.log(req.user.privilege);
+    // console.log(roles);
+
+    if (!roles.includes(req.user.privilege)) {  
       return next(
         new ErrorHandler(
           `Role: ${req.user.privilege} is not allowed to access this resource`,

@@ -13,7 +13,7 @@ router
   .route("/register")
   .post(
     auth.checkUserAuthentication,
-    auth.checkAdminPrivileges("admin "),
+    auth.checkAdminPrivileges("admin"),
     adminController.registerAdmin
   );
 

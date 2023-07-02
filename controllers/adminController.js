@@ -6,6 +6,7 @@ const catchAsyncError = require("../middleware/CatchAsyncErrors");
 const { sendToken } = require("../utils/jwt");
 
 exports.registerAdmin = catchAsyncError(async (req, res, next) => {
+  console.log(req.body);
   const { name, email, password, privilege } = req.body;
   if (!name || !email || !password) {
     return next(new ErrorHandler("Missing fields", 400));
@@ -137,7 +138,7 @@ exports.updateAdminPrivilege = catchAsyncError(async (req, res, next) => {
   if (!privilege) {
     return next(new ErrorHandler("Invalid: no data provided", 400));
   }
-  if (!["super", "moderate", "low"].includes(privilege)) {
+  if (!["admin", "prestataire", "client"].includes(privilege)) {
     return next(new ErrorHandler("Invalid: data invalid", 400));
   }
   const admin = await Admin.findById(req.params.id);

@@ -177,10 +177,15 @@ exports.updateProduct = catchAsyncError(async (req, res, next) => {
 
 // delete an existing product
 exports.deleteProduct = catchAsyncError(async (req, res, next) => {
+  // console.log(req.body);
+  // req.body.admin = req.user.id;
+  // const  codeProductt = req.body;
+  // productt =await getData(req);
   if (!req.params.id) {
     return next(new ErrorHandler("Product Not Found", 400));
   }
   const product = await Product.findById(req.params.id);
+  // code = await getData(req);
   if (!product) {
     return next(new ErrorHandler("Product Not Found", 200));
   }
@@ -188,6 +193,15 @@ exports.deleteProduct = catchAsyncError(async (req, res, next) => {
     await cloudinary.uploader.destroy(product.images[i].public_id);
   }
   await product.remove();
+  await connection.query(
+    "DELETE FROM products WHERE nameProduct = ?",
+    [product.name],
+    (error, results) => {
+      if (error) throw error;
+      console.log(results);
+    }
+  );
+  
   res.status(200).json({
     success: true,
     message: "Product deleted",
@@ -201,7 +215,7 @@ exports.getAllProducts = catchAsyncError(async (req, res) => {
  if(req.headers.isadmin != 'true'){
   if (req.headers.access_id != null){
     products= await Product.find({ admin: req.headers.access_id  })
-
+    
   }
  }else if (req.headers.isadmin == 'true'){
   products = await Product.find();
@@ -241,6 +255,46 @@ exports.getAllProducts = catchAsyncError(async (req, res) => {
     data,
   });
 });
+
+exports.getAllProductsFromClient = catchAsyncError(async (req, res) => {
+  var products ;
+  products = await Product.find();
+
+  const data = products.map((item, index) => {
+    const {
+      _id: id,
+      name,
+      price,
+      images,
+      colors,
+      ShopName,
+      description,
+      category,
+      stock,
+      shipping,
+      featured,
+    } = item;
+    const newItem = {
+      id,
+      name,
+      price,
+      image: images[0].url,
+      colors,
+      ShopName,
+      description,
+      category,
+      stock,
+      shipping,
+      featured,
+    };
+    return newItem;
+  });
+  res.status(200).json({
+    success: true,
+    data,
+  });
+});
+
 // exports.getAllProducts = catchAsyncError(async (req, res) => {
 //   const userId = req.user.id; // Assuming you have user authentication and can access the user ID
 
@@ -326,6 +380,7 @@ exports.getAllProducts = catchAsyncError(async (req, res) => {
 
 // send only a single product detaisl
 exports.getSingleProduct = catchAsyncError(async (req, res, next) => {
+  console.log(req.params.id);
   if (!req.params.id) {
     return next(new ErrorHandler("Product Not Found", 400));
   }
@@ -442,6 +497,7 @@ exports.getAllReviews = catchAsyncError(async (req, res, next) => {
 
 // delete product review
 exports.deleteReview = catchAsyncError(async (req, res, next) => {
+  console.log("================================Delete");
   if (!req.params.id) {
     return next(new ErrorHandler("Product not found", 400));
   }
