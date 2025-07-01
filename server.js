@@ -39,7 +39,7 @@ connectToDb();
 // using middlewares
 app.use(
   cors({
-    origin: [/netlify\.app$/, /localhost:\d{4}$/],
+    origin: "marque-blanche-ecommerce-admin-main-r0hpluv0o.vercel.app",
     credentials: true,
   })
 );
