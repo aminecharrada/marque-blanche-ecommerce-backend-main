@@ -39,7 +39,7 @@ connectToDb();
 // using middlewares
 app.use(
   cors({
-    origin: ["marque-blanche-ecommerce-admin-main-r0hpluv0o.vercel.app"],
+    origin: ["https://marque-blanche-ecommerce-admin-main.vercel.app"],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   })
